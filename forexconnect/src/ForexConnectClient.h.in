@@ -109,6 +109,7 @@ namespace pyforexconnect
 	bool closePosition(const std::string& tradeID);
 	double getBid(const std::string& instrument);
 	double getAsk(const std::string& instrument);
+	boost::python::list getQuote(const std::string& instrument);
 	std::vector<Prices> getHistoricalPrices(const std::string& instrument,
 						const boost::posix_time::ptime& from,
 						const boost::posix_time::ptime& to,
