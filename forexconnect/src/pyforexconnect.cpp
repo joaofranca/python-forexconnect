@@ -188,6 +188,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 	    ":param str tradeID: trade id which can get from 'get_trades'")
 	.def("get_bid", &ForexConnectClient::getBid)
 	.def("get_ask", &ForexConnectClient::getAsk)
+	.def("get_quote", &ForexConnectClient::getQuote)
 	.def("get_historical_prices",
 	     &ForexConnectClient::getHistoricalPricesForPython,
 	     getHistoricalPricesForPythonOverloads())

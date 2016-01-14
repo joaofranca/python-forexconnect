@@ -599,6 +599,30 @@ double ForexConnectClient::getAsk(const std::string& instrument) {
     throw std::runtime_error("Could not get offer table row.");
 }
 
+boost::python::list ForexConnectClient::getQuote(const std::string& instrument) {
+    O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
+    O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
+    IO2GOfferTableRow* offerRow = NULL;
+    IO2GTableIterator iterator;
+    while (offersTable->getNextRow(iterator, offerRow))
+    {
+        if (offerRow->getInstrument() == instrument)
+        {
+            const double ask = offerRow->getAsk();
+            const double bid = offerRow->getBid();
+            offerRow->release();
+
+            std::vector<double> ret;
+            ret.push_back(bid);
+            ret.push_back(ask);
+
+            return vector_to_python_list(ret);
+        }
+        offerRow->release();
+    }
+    throw std::runtime_error("Could not get offer table row.");
+}
+
 std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& instrument,
 							    const boost::posix_time::ptime& from,
 							    const boost::posix_time::ptime& to,
