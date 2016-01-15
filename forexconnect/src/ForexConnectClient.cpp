@@ -680,6 +680,14 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
     return prices;
 }
 
+boost::python::list ForexConnectClient::getHistoricalPricesByCount(
+                                    const std::string& instrument,
+                                    int count,
+                                    const std::string& timeFrame)
+{
+    // TODO    
+}
+
 boost::python::list ForexConnectClient::getHistoricalPricesForPython(const std::string& instrument,
 								     const boost::posix_time::ptime& from,
 								     const boost::posix_time::ptime& to,

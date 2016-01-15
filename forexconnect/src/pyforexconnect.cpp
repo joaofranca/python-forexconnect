@@ -192,6 +192,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def("get_historical_prices",
 	     &ForexConnectClient::getHistoricalPricesForPython,
 	     getHistoricalPricesForPythonOverloads())
+	.def("get_historical_prices_by_count", &ForexConnectClient::getHistoricalPricesByCount)
 	.def("login", &ForexConnectClient::login)
 	.def("logout", &ForexConnectClient::logout)
 	.def("get_account_id", &ForexConnectClient::getAccountID)
