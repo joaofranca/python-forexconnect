@@ -685,7 +685,42 @@ boost::python::list ForexConnectClient::getHistoricalPricesByCount(
                                     int count,
                                     const std::string& timeFrame)
 {
-    // TODO    
+
+    std::vector<Prices> prices;
+    O2G2Ptr<IO2GTimeframeCollection> timeframeCollection = mpRequestFactory->getTimeFrameCollection();
+    O2G2Ptr<IO2GTimeframe> timeframe = timeframeCollection->get(timeFrame.c_str());
+    if (!timeframe)
+    {
+        BOOST_LOG_TRIVIAL(error) << "Timeframe '" << timeFrame << "' is incorrect!";
+        return vector_to_python_list(prices);
+    }
+    O2G2Ptr<IO2GRequest> request = mpRequestFactory->createMarketDataSnapshotRequestInstrument(instrument.c_str(),
+                                                   timeframe,
+                                                   count);
+
+    mpResponseListener->setRequestID(request->getRequestID());
+    mpSession->sendRequest(request);
+    if (!mpResponseListener->waitEvents())
+    {
+        BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
+        return vector_to_python_list(prices);
+    }
+    O2G2Ptr<IO2GResponse> response = mpResponseListener->getResponse();
+    if (response && response->getType() == MarketDataSnapshot)
+    {
+        O2G2Ptr<IO2GMarketDataSnapshotResponseReader> reader = mpResponseReaderFactory->createMarketDataSnapshotReader(response);
+        if (reader->size() <= 0)
+        {
+            BOOST_LOG_TRIVIAL(warning) << "getHistoricalPricesByCount: 0 rows received";
+            return vector_to_python_list(prices);
+        }
+
+        std::vector<Prices> prc = getPricesFromResponse(response);
+        prices.insert(prices.end(), prc.begin(), prc.end());
+    }
+
+    return vector_to_python_list(prices);
+
 }
 
 boost::python::list ForexConnectClient::getHistoricalPricesForPython(const std::string& instrument,
