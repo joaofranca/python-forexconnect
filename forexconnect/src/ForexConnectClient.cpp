@@ -490,8 +490,6 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
         trade.mGrossPL = tradeRow->getGrossPL();        
         trades.push_back(trade);        
 
-        BOOST_LOG_TRIVIAL(info) << "trade order id: "<< tradeRow->getOpenOrderID();
-
         tradeRow->release();
 
     }
