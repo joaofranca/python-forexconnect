@@ -86,7 +86,8 @@ Prices::Prices()
       mOpen(0.0),
       mHigh(0.0),
       mLow(0.0),
-      mClose(0.0)
+      mClose(0.0),
+      mVolume(0.0)
 {
 }
 
@@ -96,7 +97,8 @@ Prices::Prices(boost::posix_time::ptime date,
       mOpen(value),
       mHigh(value),
       mLow(value),
-      mClose(value)
+      mClose(value),
+      mVolume(value)
 {
 }
 
@@ -104,12 +106,14 @@ Prices::Prices(boost::posix_time::ptime date,
 	       double open,
 	       double high,
 	       double low,
-	       double close)
+	       double close,
+           double volume)
     : mDate(date),
       mOpen(open),
       mHigh(high),
       mLow(low),
-      mClose(close)
+      mClose(close),
+      mVolume(volume)
 {
 }
 
@@ -119,7 +123,8 @@ bool Prices::operator==(const Prices& other)
 	mOpen == other.mOpen &&
 	mHigh == other.mHigh &&
 	mLow == other.mLow &&
-	mClose == other.mClose;
+	mClose == other.mClose &&
+    mVolume == other.mVolume;
 }
 
 bool Prices::operator!=(const Prices& other)
@@ -133,7 +138,8 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, Prices const& pr)
 	<< ", 'open': " << pr.mOpen
 	<< ", 'high': " << pr.mHigh
 	<< ", 'low': " << pr.mLow
-	<< ", 'close': " << pr.mClose << ">";
+	<< ", 'close': " << pr.mClose
+    << ", 'volume': " << pr.mVolume << ">";
     return out;
 }
 
@@ -739,31 +745,39 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
     std::vector<Prices> prices;
     if (!response || response->getType() != MarketDataSnapshot)
     {
-	return prices;
+	   return prices;
     }
+
     BOOST_LOG_TRIVIAL(debug) << "Request with RequestID='" << response->getRequestID() << "' is completed:";
+
     O2G2Ptr<IO2GMarketDataSnapshotResponseReader> reader = mpResponseReaderFactory->createMarketDataSnapshotReader(response);
+    
     if (!reader)
     {
-	return prices;
+	   return prices;
     }
+
     for (int ii = reader->size() - 1; ii >= 0; ii--)
     {
-	DATE dt = reader->getDate(ii);
-	if (reader->isBar())
-	{
-	    prices.push_back(Prices(toPtime(dt),
-				    reader->getAskOpen(ii),
-				    reader->getAskHigh(ii),
-				    reader->getAskLow(ii),
-				    reader->getAskClose(ii)));
-	}
-	else
-	{
-	    prices.push_back(Prices(toPtime(dt),
-				    reader->getAsk(ii)));
-	}
+        DATE dt = reader->getDate(ii);
+        if (reader->isBar())
+        {
+            prices.push_back(Prices(
+                toPtime(dt),
+                reader->getAskOpen(ii)/reader->getBidOpen(ii),
+                reader->getAskHigh(ii)/reader->getBidHigh(ii),
+                reader->getAskLow(ii)/reader->getBidLow(ii),
+                reader->getAskClose(ii)/reader->getBidClose(ii),
+                reader->getVolume(ii)));
+        }
+        else
+        {
+            prices.push_back(Prices(
+                toPtime(dt),
+			    reader->getAsk(ii)/reader->getBid(ii)));
+        }
     }
+
     return prices;
 }
 

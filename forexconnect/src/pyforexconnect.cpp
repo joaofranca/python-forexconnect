@@ -82,40 +82,42 @@ struct prices_pickle_suite : boost::python::pickle_suite
 {
     static boost::python::tuple getinitargs(const Prices& p)
     {
-        return boost::python::make_tuple(p.mDate, p.mOpen, p.mHigh, p.mLow, p.mClose);
+        return boost::python::make_tuple(p.mDate, p.mOpen, p.mHigh, p.mLow, p.mClose, p.mVolume);
     }
 
     static boost::python::tuple getstate(boost::python::object obj)
     {
         Prices const& p = boost::python::extract<Prices const&>(obj)();
-	boost::python::dict d = boost::python::extract<boost::python::dict>(obj.attr("__dict__"));
-	d["date"] = p.mDate;
-	d["open"] = p.mOpen;
-	d["high"] = p.mHigh;
-	d["low"] = p.mLow;
-	d["close"] = p.mClose;
+		boost::python::dict d = boost::python::extract<boost::python::dict>(obj.attr("__dict__"));
+		d["date"] = p.mDate;
+		d["open"] = p.mOpen;
+		d["high"] = p.mHigh;
+		d["low"] = p.mLow;
+		d["close"] = p.mClose;
+		d["volume"] = p.mVolume;
         return boost::python::make_tuple(d);
     }
 
     static void setstate(boost::python::object obj, boost::python::tuple state)
     {
         using namespace boost::python;
-	Prices& p = extract<Prices&>(obj)();
+		Prices& p = extract<Prices&>(obj)();
 
         if (len(state) != 1)
         {
-	    PyErr_SetObject(PyExc_ValueError,
-			    ("expected 1-item tuple in call to __setstate__; got %s"
-			     % state).ptr()
-		);
-	    throw_error_already_set();
+			PyErr_SetObject(PyExc_ValueError,
+				    ("expected 1-item tuple in call to __setstate__; got %s"
+				     % state).ptr()
+			);
+			throw_error_already_set();
         }
-	dict d = extract<dict>(state[0]);
-	p.mDate = extract<boost::posix_time::ptime>(d["date"]);
-	p.mOpen = extract<double>(d["open"]);
-	p.mHigh = extract<double>(d["high"]);
-	p.mLow = extract<double>(d["low"]);
-	p.mClose = extract<double>(d["close"]);
+		dict d = extract<dict>(state[0]);
+		p.mDate = extract<boost::posix_time::ptime>(d["date"]);
+		p.mOpen = extract<double>(d["open"]);
+		p.mHigh = extract<double>(d["high"]);
+		p.mLow = extract<double>(d["low"]);
+		p.mClose = extract<double>(d["close"]);
+		p.mVolume = extract<double>(d["volume"]);
     }
 
     static bool getstate_manages_dict() {return true;}
@@ -164,7 +166,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def(self_ns::repr(self));
 
     class_<Prices>("Prices")
-	.def(init<boost::posix_time::ptime, double, double, double, double>())
+	.def(init<boost::posix_time::ptime, double, double, double, double, double>())
 	.add_property("date",
 		      make_getter(&Prices::mDate, return_value_policy<return_by_value>()),
 		      make_setter(&Prices::mDate, return_value_policy<copy_non_const_reference>()))
@@ -172,6 +174,7 @@ BOOST_PYTHON_MODULE(forexconnect)
 	.def_readwrite("high", &Prices::mHigh)
 	.def_readwrite("low", &Prices::mLow)
 	.def_readwrite("close", &Prices::mClose)
+	.def_readwrite("volume", &Prices::mVolume)
 	.def(self_ns::str(self))
 	.def(self_ns::repr(self))
 	.def_pickle(prices_pickle_suite());
