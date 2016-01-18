@@ -193,6 +193,8 @@ BOOST_PYTHON_MODULE(forexconnect)
     .def("is_connected", &ForexConnectClient::isConnected)
     .def("open_position", &ForexConnectClient::openPosition,
          ":param str instrument: type of quotes(ex. 'EUR/USD')\n:param str buysell: buy or sell\n:param int amount: amount of position")
+    .def("open_position_and_return_order_id", &ForexConnectClient::openPositionAndReturnOrderID,
+         ":param str instrument: type of quotes(ex. 'EUR/USD')\n:param str buysell: buy or sell\n:param int amount: amount of position")
     .def("close_position", &ForexConnectClient::closePosition,
         ":param str tradeID: trade id which can get from 'get_trades'")
     .def("get_bid", &ForexConnectClient::getBid)
