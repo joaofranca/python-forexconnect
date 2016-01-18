@@ -19,3 +19,6 @@ script:
   - cd build
   - cmake ..
   - sudo make install
+branches:
+  only:
+    - master
