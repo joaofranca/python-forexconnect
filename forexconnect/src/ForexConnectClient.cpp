@@ -479,26 +479,30 @@ boost::python::list ForexConnectClient::getTradesForPython()
     return vector_to_python_list(getTrades());
 }
 
-bool ForexConnectClient::openPosition(const std::string& instrument,
-				      const std::string& buysell,
-				      int amount)
+bool ForexConnectClient::openPosition(
+    const std::string& instrument,
+    const std::string& buysell,
+    int amount)
 {
     if (buysell != O2G2::Sell && buysell != O2G2::Buy)
     {
-	return false;
+	   return false;
     }
 
     std::map<std::string, std::string> offers = getOffers();
     std::string offerID;
     std::map<std::string, std::string>::const_iterator offer_itr = offers.find(instrument);
+
     if (offer_itr != offers.end()) {
-	offerID = offer_itr->second;
+        offerID = offer_itr->second;
     } else {
-	BOOST_LOG_TRIVIAL(error) << "Could not find offer row for instrument " << instrument;
-	return false;
+        BOOST_LOG_TRIVIAL(error) << "Could not find offer row for instrument " << instrument;
+        return false;
     }
+
     O2G2Ptr<IO2GTradingSettingsProvider> tradingSettingsProvider = mpLoginRules->getTradingSettingsProvider();
     int iBaseUnitSize = tradingSettingsProvider->getBaseUnitSize(instrument.c_str(), mpAccountRow);
+    
     O2G2Ptr<IO2GValueMap> valuemap = mpRequestFactory->createValueMap();
     valuemap->setString(Command, O2G2::Commands::CreateOrder);
     valuemap->setString(OrderType, O2G2::Orders::TrueMarketOpen);
@@ -508,21 +512,29 @@ bool ForexConnectClient::openPosition(const std::string& instrument,
     valuemap->setInt(Amount, amount * iBaseUnitSize);
     valuemap->setString(TimeInForce, O2G2::TIF::IOC);
     valuemap->setString(CustomID, "TrueMarketOrder");
+
     O2G2Ptr<IO2GRequest> request = mpRequestFactory->createOrderRequest(valuemap);
     if (!request)
     {
         BOOST_LOG_TRIVIAL(error) << mpRequestFactory->getLastError();
         return false;
     }
+
     mpResponseListener->setRequestID(request->getRequestID());
     mpSession->sendRequest(request);
+
     if (mpResponseListener->waitEvents())
     {
-	Sleep(1000); // Wait for the balance update
-	BOOST_LOG_TRIVIAL(info) << "Done!";
-	return true;
+    	Sleep(1000); // Wait for the balance update
+    	BOOST_LOG_TRIVIAL(info) << "Done!";
+
+        IO2GOrderResponseReader
+
+    	return true;
     }
+
     BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
+
     return false;
 }
 
@@ -531,16 +543,19 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
     O2G2Ptr<IO2GTableManager> tableManager = getLoadedTableManager();
     O2G2Ptr<IO2GTradesTable> tradesTable = static_cast<IO2GTradesTable*>(tableManager->getTable(Trades));
     IO2GTradeTableRow *tradeRow = NULL;
+    
     IO2GTableIterator tableIterator;
     while (tradesTable->getNextRow(tableIterator, tradeRow)) {
-	if (tradeID == tradeRow->getTradeID()) {
-	    break;
-	}
+        if (tradeID == tradeRow->getTradeID()) {
+            break;
+        }
     }
+
     if (!tradeRow) {
-	BOOST_LOG_TRIVIAL(error) << "Could not find trade with ID = " << tradeID;
+        BOOST_LOG_TRIVIAL(error) << "Could not find trade with ID = " << tradeID;
         return false;
     }
+
     O2G2Ptr<IO2GValueMap> valuemap = mpRequestFactory->createValueMap();
     valuemap->setString(Command, O2G2::Commands::CreateOrder);
     valuemap->setString(OrderType, O2G2::Orders::TrueMarketClose);
@@ -551,21 +566,25 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
     tradeRow->release();
     valuemap->setInt(Amount, tradeRow->getAmount());
     valuemap->setString(CustomID, "CloseMarketOrder");
+
     O2G2Ptr<IO2GRequest> request = mpRequestFactory->createOrderRequest(valuemap);
     if (!request)
     {
         BOOST_LOG_TRIVIAL(error) << mpRequestFactory->getLastError();
         return false;
     }
+
     mpResponseListener->setRequestID(request->getRequestID());
-    mpSession->sendRequest(request);
+    mpSession->sendRequest(request);    
     if (mpResponseListener->waitEvents())
     {
-	Sleep(1000); // Wait for the balance update
-	BOOST_LOG_TRIVIAL(info) << "Done!";
-	return true;
+        Sleep(1000); // Wait for the balance update
+        BOOST_LOG_TRIVIAL(info) << "Done!";
+        return true;
     }
+
     BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
+
     return false;
 }
 
@@ -658,31 +677,34 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
             BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
             return prices;
         }
+
         // shift "to" bound to oldest datetime of returned data
         O2G2Ptr<IO2GResponse> response = mpResponseListener->getResponse();
         if (response && response->getType() == MarketDataSnapshot)
         {
-	    O2G2Ptr<IO2GMarketDataSnapshotResponseReader> reader = mpResponseReaderFactory->createMarketDataSnapshotReader(response);
-	    if (reader->size() > 0)
-	    {
-		if (fabs(dtFirst - reader->getDate(0)) > 0.0001)
-		    dtFirst = reader->getDate(0); // earliest datetime of returned data
-		else
-		    break;
-	    }
-	    else
-	    {
-		BOOST_LOG_TRIVIAL(warning) << "0 rows received";
-		break;
-	    }
-	    std::vector<Prices> prc = getPricesFromResponse(response);
-	    prices.insert(prices.end(), prc.begin(), prc.end());
-	}
-	else
-	{
-	    break;
-	}
+            O2G2Ptr<IO2GMarketDataSnapshotResponseReader> reader = mpResponseReaderFactory->createMarketDataSnapshotReader(response);
+            if (reader->size() > 0)
+            {
+                if (fabs(dtFirst - reader->getDate(0)) > 0.0001)
+                    dtFirst = reader->getDate(0); // earliest datetime of returned data
+                else
+                    break;
+            }
+            else
+            {
+                BOOST_LOG_TRIVIAL(warning) << "0 rows received";
+                break;
+            }
+            std::vector<Prices> prc = getPricesFromResponse(response);
+            prices.insert(prices.end(), prc.begin(), prc.end());
+        }
+        else
+        {
+            break;
+        }
+        
     } while (dtFirst - dtFrom > 0.0001);
+    
     return prices;
 }
 
