@@ -73,6 +73,7 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, TradeInfo const& ti)
 {
     out << "<'instrument': " << ti.mInstrument
 	<< ", 'trade_id': " << ti.mTradeID
+    << ", 'order_id': " << ti.mOrderID
 	<< ", 'buy_sell': " << ti.mBuySell
 	<< ", 'open_rate': " << ti.mOpenRate
 	<< ", 'amount': " << ti.mAmount
@@ -451,26 +452,34 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
     IO2GTradeTableRow* tradeRow = NULL;
     IO2GTableIterator tableIterator;
     std::map<std::string, std::string> offers = getOffers();
+
     while (tradesTable->getNextRow(tableIterator, tradeRow))
     {
-	TradeInfo trade;
-	const std::map<std::string, std::string>::const_iterator it = std::find_if(offers.begin(),
-										   offers.end(),
-										   boost::bind(&std::map<std::string, std::string>::value_type::second, _1) == tradeRow->getOfferID());
-	if (it == offers.end())
-	{
-	    throw std::runtime_error("Could not get offer table row.");
-	}
+        TradeInfo trade;
+        const std::map<std::string, std::string>::const_iterator it = std::find_if(
+            offers.begin(),
+            offers.end(),
+            boost::bind(&std::map<std::string, std::string>::value_type::second, _1) == tradeRow->getOfferID());
+        if (it == offers.end())
+        {
+            throw std::runtime_error("Could not get offer table row.");
+        }
         trade.mInstrument = it->first;
-	trade.mTradeID = tradeRow->getTradeID();
+        trade.mTradeID = tradeRow->getTradeID();
+        trade.mOrderID = tradeRow->getOpenOrderID();
         trade.mBuySell = tradeRow->getBuySell();
         trade.mOpenRate = tradeRow->getOpenRate();
         trade.mAmount = tradeRow->getAmount();
         trade.mOpenDate = toPtime(tradeRow->getOpenTime());
-        trade.mGrossPL = tradeRow->getGrossPL();
-	trades.push_back(trade);
+        trade.mGrossPL = tradeRow->getGrossPL();        
+        trades.push_back(trade);        
+
+        BOOST_LOG_TRIVIAL(info) << "trade order id: "<< tradeRow->getOpenOrderID();
+
         tradeRow->release();
+
     }
+
     return trades;
 }
 
@@ -523,19 +532,30 @@ bool ForexConnectClient::openPosition(
     mpResponseListener->setRequestID(request->getRequestID());
     mpSession->sendRequest(request);
 
-    if (mpResponseListener->waitEvents())
+    if (!mpResponseListener->waitEvents())
     {
-    	Sleep(1000); // Wait for the balance update
-    	BOOST_LOG_TRIVIAL(info) << "Done!";
-
-        IO2GOrderResponseReader
-
-    	return true;
+        BOOST_LOG_TRIVIAL(error) << "openPosition: response waiting timeout expired";
+    	return false;
     }
 
-    BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
+    Sleep(1000); // Wait for the balance update    
 
-    return false;
+    O2G2Ptr<IO2GResponse> response = mpResponseListener->getResponse();
+    if (response && response->getType() == CreateOrderResponse)
+    {
+        IO2GResponseReaderFactory * readerFactory = mpSession->getResponseReaderFactory();
+        IO2GOrderResponseReader * reader = readerFactory->createOrderResponseReader(response);
+
+        BOOST_LOG_TRIVIAL(info) << "Done! OrderId: " << reader->getOrderID();
+
+        reader->release();
+        readerFactory->release();
+
+    }else{
+        BOOST_LOG_TRIVIAL(info) << "Done! ";
+    }
+
+    return true;
 }
 
 bool ForexConnectClient::closePosition(const std::string& tradeID)
@@ -702,7 +722,7 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
         {
             break;
         }
-        
+
     } while (dtFirst - dtFrom > 0.0001);
     
     return prices;
