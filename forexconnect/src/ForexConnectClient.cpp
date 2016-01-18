@@ -553,8 +553,6 @@ std::string ForexConnectClient::openPositionAndReturnOrderID(
         return "";
     }
 
-    Sleep(1000); // Wait for the balance update    
-
     O2G2Ptr<IO2GResponse> response = mpResponseListener->getResponse();
     if (response && response->getType() != CreateOrderResponse)
     {
@@ -626,8 +624,6 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
         BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
         return false;
     }
-
-    Sleep(1000); // Wait for the balance update
 
     BOOST_LOG_TRIVIAL(info) << "Done!";
 
