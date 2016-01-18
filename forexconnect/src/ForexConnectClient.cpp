@@ -9,22 +9,26 @@ namespace
 {
     template <class T>
     boost::python::list vector_to_python_list(const std::vector<T>& vector) {
-	typename std::vector<T>::const_iterator iter;
-	boost::python::list list;
-	for (iter = vector.begin(); iter != vector.end(); ++iter) {
-	    list.append(*iter);
-	}
-	return list;
+        
+        typename std::vector<T>::const_iterator iter;
+        boost::python::list list;
+        for (iter = vector.begin(); iter != vector.end(); ++iter) {
+            list.append(*iter);
+        }
+
+        return list;
     }
 
     template <class K, class V>
     boost::python::dict map_to_python_dict(const std::map<K, V>& map) {
-	typename std::map<K, V>::const_iterator iter;
-	boost::python::dict dictionary;
-	for (iter = map.begin(); iter != map.end(); ++iter) {
-	    dictionary[iter->first] = iter->second;
-	}
-	return dictionary;
+
+        typename std::map<K, V>::const_iterator iter;
+        boost::python::dict dictionary;
+        for (iter = map.begin(); iter != map.end(); ++iter) {
+            dictionary[iter->first] = iter->second;
+        }
+
+        return dictionary;
     }
 }
 
@@ -32,10 +36,11 @@ LoginParams::LoginParams()
 {
 }
 
-LoginParams::LoginParams(const std::string& login,
-			 const std::string& password,
-			 const std::string& connection,
-			 const std::string& url)
+LoginParams::LoginParams(
+    const std::string& login,
+    const std::string& password,
+    const std::string& connection,
+    const std::string& url)
     : mLogin(login),
       mPassword(password),
       mConnection(connection),
@@ -46,9 +51,9 @@ LoginParams::LoginParams(const std::string& login,
 std::ostream& pyforexconnect::operator<<(std::ostream& out, LoginParams const& lp)
 {
     out << "<'login': " << lp.mLogin
-	<< ", 'password': " << lp.mPassword
-	<< ", 'connection': " << lp.mConnection
-	<< ", 'url': " << lp.mUrl << ">";
+    << ", 'password': " << lp.mPassword
+    << ", 'connection': " << lp.mConnection
+    << ", 'url': " << lp.mUrl << ">";
     return out;
 }
 
@@ -72,13 +77,13 @@ bool TradeInfo::operator!=(const TradeInfo& other)
 std::ostream& pyforexconnect::operator<<(std::ostream& out, TradeInfo const& ti)
 {
     out << "<'instrument': " << ti.mInstrument
-	<< ", 'trade_id': " << ti.mTradeID
+    << ", 'trade_id': " << ti.mTradeID
     << ", 'order_id': " << ti.mOrderID
-	<< ", 'buy_sell': " << ti.mBuySell
-	<< ", 'open_rate': " << ti.mOpenRate
-	<< ", 'amount': " << ti.mAmount
-	<< ", 'open_date': " << ti.mOpenDate
-	<< ", 'gross_pl': " << ti.mGrossPL << ">";
+    << ", 'buy_sell': " << ti.mBuySell
+    << ", 'open_rate': " << ti.mOpenRate
+    << ", 'amount': " << ti.mAmount
+    << ", 'open_date': " << ti.mOpenDate
+    << ", 'gross_pl': " << ti.mGrossPL << ">";
     return out;
 }
 
@@ -93,7 +98,7 @@ Prices::Prices()
 }
 
 Prices::Prices(boost::posix_time::ptime date,
-	       double value)
+    double value)
     : mDate(date),
       mOpen(value),
       mHigh(value),
@@ -104,11 +109,11 @@ Prices::Prices(boost::posix_time::ptime date,
 }
 
 Prices::Prices(boost::posix_time::ptime date,
-	       double open,
-	       double high,
-	       double low,
-	       double close,
-           double volume)
+    double open,
+    double high,
+    double low,
+    double close,
+    double volume)
     : mDate(date),
       mOpen(open),
       mHigh(high),
@@ -121,10 +126,10 @@ Prices::Prices(boost::posix_time::ptime date,
 bool Prices::operator==(const Prices& other)
 {
     return mDate == other.mDate &&
-	mOpen == other.mOpen &&
-	mHigh == other.mHigh &&
-	mLow == other.mLow &&
-	mClose == other.mClose &&
+    mOpen == other.mOpen &&
+    mHigh == other.mHigh &&
+    mLow == other.mLow &&
+    mClose == other.mClose &&
     mVolume == other.mVolume;
 }
 
@@ -136,18 +141,18 @@ bool Prices::operator!=(const Prices& other)
 std::ostream& pyforexconnect::operator<<(std::ostream& out, Prices const& pr)
 {
     out << "<'date': " << pr.mDate
-	<< ", 'open': " << pr.mOpen
-	<< ", 'high': " << pr.mHigh
-	<< ", 'low': " << pr.mLow
-	<< ", 'close': " << pr.mClose
+    << ", 'open': " << pr.mOpen
+    << ", 'high': " << pr.mHigh
+    << ", 'low': " << pr.mLow
+    << ", 'close': " << pr.mClose
     << ", 'volume': " << pr.mVolume << ">";
     return out;
 }
 
 SessionStatusListener::SessionStatusListener(IO2GSession *session,
-					     bool printSubsessions,
-					     const std::string& sessionID,
-					     const std::string& pin)
+    bool printSubsessions,
+    const std::string& sessionID,
+    const std::string& pin)
     : mSessionID(sessionID),
       mPin(pin),
       mSession(session)
@@ -197,64 +202,72 @@ void SessionStatusListener::onSessionStatusChanged(IO2GSessionStatus::O2GSession
 {
     switch (status)
     {
-    case IO2GSessionStatus::Disconnected:
-        BOOST_LOG_TRIVIAL(info) << "status::disconnected";
-        mConnected = false;
-        mDisconnected = true;
-        SetEvent(mSessionEvent);
-        break;
-    case IO2GSessionStatus::Connecting:
-        BOOST_LOG_TRIVIAL(info) << "status::connecting";
-        break;
-    case IO2GSessionStatus::TradingSessionRequested:
-    {
-        BOOST_LOG_TRIVIAL(info) << "status::trading session requested";
-        O2G2Ptr<IO2GSessionDescriptorCollection> descriptors = mSession->getTradingSessionDescriptors();
-        bool found = false;
-        if (descriptors)
-        {
-            if (mPrintSubsessions)
-                BOOST_LOG_TRIVIAL(info) << "descriptors available:";
-            for (int i = 0; i < descriptors->size(); ++i)
+        case IO2GSessionStatus::Disconnected:
+            BOOST_LOG_TRIVIAL(info) << "status::disconnected";
+            mConnected = false;
+            mDisconnected = true;
+            SetEvent(mSessionEvent);
+            break;
+
+        case IO2GSessionStatus::Connecting:
+            BOOST_LOG_TRIVIAL(info) << "status::connecting";
+            break;
+
+        case IO2GSessionStatus::TradingSessionRequested:      
+        {  
+            BOOST_LOG_TRIVIAL(info) << "status::trading session requested";
+            O2G2Ptr<IO2GSessionDescriptorCollection> descriptors = mSession->getTradingSessionDescriptors();
+            bool found = false;
+            
+            if (descriptors)
             {
-                O2G2Ptr<IO2GSessionDescriptor> descriptor = descriptors->get(i);
                 if (mPrintSubsessions)
-                    BOOST_LOG_TRIVIAL(info) << "  id:='" << descriptor->getID()
-					    << "' name='" << descriptor->getName()
-					    << "' description='" << descriptor->getDescription()
-					    << "' " << (descriptor->requiresPin() ? "requires pin" : "");
-                if (mSessionID == descriptor->getID())
+                    BOOST_LOG_TRIVIAL(info) << "descriptors available:";
+                for (int i = 0; i < descriptors->size(); ++i)
                 {
-                    found = true;
-                    break;
+                    O2G2Ptr<IO2GSessionDescriptor> descriptor = descriptors->get(i);
+                    if (mPrintSubsessions)
+                        BOOST_LOG_TRIVIAL(info) << "  id:='" << descriptor->getID()
+                            << "' name='" << descriptor->getName()
+                            << "' description='" << descriptor->getDescription()
+                            << "' " << (descriptor->requiresPin() ? "requires pin" : "");
+                    if (mSessionID == descriptor->getID())
+                    {
+                        found = true;
+                        break;
+                    }
                 }
             }
+
+            if (!found)
+            {
+                onLoginFailed("The specified sub session identifier is not found");
+            }
+            else
+            {
+                mSession->setTradingSession(mSessionID.c_str(), mPin.c_str());
+            }
         }
-        if (!found)
-        {
-            onLoginFailed("The specified sub session identifier is not found");
-        }
-        else
-        {
-            mSession->setTradingSession(mSessionID.c_str(), mPin.c_str());
-        }
-    }
-    break;
-    case IO2GSessionStatus::Connected:
-        BOOST_LOG_TRIVIAL(info) << "status::connected";
-        mConnected = true;
-        mDisconnected = false;
-        SetEvent(mSessionEvent);
         break;
-    case IO2GSessionStatus::Reconnecting:
-        BOOST_LOG_TRIVIAL(info) << "status::reconnecting";
-        break;
-    case IO2GSessionStatus::Disconnecting:
-        BOOST_LOG_TRIVIAL(info) << "status::disconnecting";
-        break;
-    case IO2GSessionStatus::SessionLost:
-        BOOST_LOG_TRIVIAL(info) << "status::session lost";
-        break;
+
+        case IO2GSessionStatus::Connected:
+            BOOST_LOG_TRIVIAL(info) << "status::connected";
+            mConnected = true;
+            mDisconnected = false;
+            SetEvent(mSessionEvent);
+            break;
+
+        case IO2GSessionStatus::Reconnecting:
+            BOOST_LOG_TRIVIAL(info) << "status::reconnecting";
+            break;
+
+        case IO2GSessionStatus::Disconnecting:
+            BOOST_LOG_TRIVIAL(info) << "status::disconnecting";
+            break;
+
+        case IO2GSessionStatus::SessionLost:
+            BOOST_LOG_TRIVIAL(info) << "status::session lost";
+            break;
     }
 }
 
@@ -279,9 +292,9 @@ bool SessionStatusListener::waitEvents()
 }
 
 ForexConnectClient::ForexConnectClient(const std::string& login,
-				       const std::string& password,
-				       const std::string& connection,
-				       const std::string& url)
+    const std::string& password,
+    const std::string& connection,
+    const std::string& url)
     : mLoginParams(login, password, connection, url),
       mpSession(NULL),
       mpListener(NULL),
@@ -317,7 +330,7 @@ ForexConnectClient::~ForexConnectClient()
     mpResponseListener->release();
     if (mIsConnected)
     {
-	logout();
+        logout();
     }
     mpSession->unsubscribeSessionStatus(mpListener);
     mpListener->release();
@@ -333,20 +346,20 @@ void ForexConnectClient::init()
 
     if (!login())
     {
-	throw std::runtime_error("Login fail.");
+        throw std::runtime_error("Login fail.");
     }
 
     mpLoginRules = mpSession->getLoginRules();
     if (!mpLoginRules->isTableLoadedByDefault(Accounts))
     {
-	logout();
+        logout();
         throw std::runtime_error("Accounts table not loaded");
     }
 
     O2G2Ptr<IO2GResponse> response = mpLoginRules->getTableRefreshResponse(Accounts);
     if(!response)
     {
-	logout();
+        logout();
         throw std::runtime_error("No response to refresh accounts table request");
     }
 
@@ -365,9 +378,9 @@ bool ForexConnectClient::login()
 {
     mpListener->reset();
     mpSession->login(mLoginParams.mLogin.c_str(),
-		     mLoginParams.mPassword.c_str(),
-		     mLoginParams.mUrl.c_str(),
-		     mLoginParams.mConnection.c_str());
+        mLoginParams.mPassword.c_str(),
+        mLoginParams.mUrl.c_str(),
+        mLoginParams.mConnection.c_str());
     mIsConnected = mpListener->waitEvents() && mpListener->isConnected();
     return mIsConnected;
 }
@@ -406,16 +419,17 @@ IO2GAccountTableRow* ForexConnectClient::getAccount()
     while (accountsTable->getNextRow(it, account))
     {
         if (mAccountID.size() == 0 || strcmp(account->getAccountID(), mAccountID.c_str()) == 0)
-	{
+        {
             if (strcmp(account->getMarginCallFlag(), "N") == 0 &&
                 (strcmp(account->getAccountKind(), "32") == 0 ||
-		 strcmp(account->getAccountKind(), "36") == 0))
-	    {
+                strcmp(account->getAccountKind(), "36") == 0))
+            {
                 return account;
-	    }
-	}
-	account->release();
+            }
+        }
+        account->release();
     }
+
     return NULL;
 }
 
@@ -426,11 +440,13 @@ std::map<std::string, std::string> ForexConnectClient::getOffers()
     O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
     IO2GOfferTableRow *offerRow = NULL;
     IO2GTableIterator iterator;
+    
     while (offersTable->getNextRow(iterator, offerRow))
     {
         offers[offerRow->getInstrument()] = offerRow->getOfferID();
         offerRow->release();
     }
+
     return offers;
 }
 
@@ -613,16 +629,18 @@ double ForexConnectClient::getBid(const std::string& instrument) {
     O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
     IO2GOfferTableRow* offerRow = NULL;
     IO2GTableIterator iterator;
+    
     while (offersTable->getNextRow(iterator, offerRow))
     {
         if (offerRow->getInstrument() == instrument)
-	{
-	    const double bid = offerRow->getBid();
-	    offerRow->release();
-	    return bid;
-	}
-	offerRow->release();
+        {
+            const double bid = offerRow->getBid();
+            offerRow->release();
+            return bid;
+        }
+        offerRow->release();
     }
+
     throw std::runtime_error("Could not get offer table row.");
 }
 
@@ -631,16 +649,18 @@ double ForexConnectClient::getAsk(const std::string& instrument) {
     O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
     IO2GOfferTableRow* offerRow = NULL;
     IO2GTableIterator iterator;
+
     while (offersTable->getNextRow(iterator, offerRow))
     {
         if (offerRow->getInstrument() == instrument)
-	{
-	    const double ask = offerRow->getAsk();
-	    offerRow->release();
-	    return ask;
-	}
-	offerRow->release();
+        {
+            const double ask = offerRow->getAsk();
+            offerRow->release();
+            return ask;
+        }
+        offerRow->release();
     }
+
     throw std::runtime_error("Could not get offer table row.");
 }
 
@@ -649,6 +669,7 @@ boost::python::list ForexConnectClient::getQuote(const std::string& instrument) 
     O2G2Ptr<IO2GOffersTable> offersTable = static_cast<IO2GOffersTable*>(tableManager->getTable(Offers));
     IO2GOfferTableRow* offerRow = NULL;
     IO2GTableIterator iterator;
+    
     while (offersTable->getNextRow(iterator, offerRow))
     {
         if (offerRow->getInstrument() == instrument)
@@ -665,13 +686,15 @@ boost::python::list ForexConnectClient::getQuote(const std::string& instrument) 
         }
         offerRow->release();
     }
+
     throw std::runtime_error("Could not get offer table row.");
 }
 
-std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& instrument,
-							    const boost::posix_time::ptime& from,
-							    const boost::posix_time::ptime& to,
-    							    const std::string& timeFrame)
+std::vector<Prices> ForexConnectClient::getHistoricalPrices(
+    const std::string& instrument,
+    const boost::posix_time::ptime& from,
+    const boost::posix_time::ptime& to,
+    const std::string& timeFrame)
 {
     std::vector<Prices> prices;
     O2G2Ptr<IO2GTimeframeCollection> timeframeCollection = mpRequestFactory->getTimeFrameCollection();
@@ -681,9 +704,10 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
         BOOST_LOG_TRIVIAL(error) << "Timeframe '" << timeFrame << "' is incorrect!";
         return prices;
     }
-    O2G2Ptr<IO2GRequest> request = mpRequestFactory->createMarketDataSnapshotRequestInstrument(instrument.c_str(),
-											       timeframe,
-											       timeframe->getQueryDepth());
+    O2G2Ptr<IO2GRequest> request = mpRequestFactory->createMarketDataSnapshotRequestInstrument(
+        instrument.c_str(),
+        timeframe,
+        timeframe->getQueryDepth());
     DATE dtFrom = toOleTime(from);
     DATE dtTo = toOleTime(to);
     DATE dtFirst = dtTo;
@@ -729,9 +753,9 @@ std::vector<Prices> ForexConnectClient::getHistoricalPrices(const std::string& i
 }
 
 boost::python::list ForexConnectClient::getHistoricalPricesByCount(
-                                    const std::string& instrument,
-                                    int count,
-                                    const std::string& timeFrame)
+    const std::string& instrument,
+    int count,
+    const std::string& timeFrame)
 {
 
     std::vector<Prices> prices;
@@ -742,9 +766,10 @@ boost::python::list ForexConnectClient::getHistoricalPricesByCount(
         BOOST_LOG_TRIVIAL(error) << "Timeframe '" << timeFrame << "' is incorrect!";
         return vector_to_python_list(prices);
     }
-    O2G2Ptr<IO2GRequest> request = mpRequestFactory->createMarketDataSnapshotRequestInstrument(instrument.c_str(),
-                                                   timeframe,
-                                                   count);
+    O2G2Ptr<IO2GRequest> request = mpRequestFactory->createMarketDataSnapshotRequestInstrument(
+        instrument.c_str(),
+        timeframe,
+        count);
 
     mpResponseListener->setRequestID(request->getRequestID());
     mpSession->sendRequest(request);
@@ -771,15 +796,17 @@ boost::python::list ForexConnectClient::getHistoricalPricesByCount(
 
 }
 
-boost::python::list ForexConnectClient::getHistoricalPricesForPython(const std::string& instrument,
-								     const boost::posix_time::ptime& from,
-								     const boost::posix_time::ptime& to,
-								     const std::string& timeFrame)
+boost::python::list ForexConnectClient::getHistoricalPricesForPython(
+    const std::string& instrument,
+    const boost::posix_time::ptime& from,
+    const boost::posix_time::ptime& to,
+    const std::string& timeFrame)
 {
-    return vector_to_python_list(getHistoricalPrices(instrument,
-						     from,
-						     to,
-						     timeFrame));
+    return vector_to_python_list(getHistoricalPrices(
+        instrument,
+        from,
+        to,
+        timeFrame));
 }
 
 std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* response)
@@ -787,7 +814,7 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
     std::vector<Prices> prices;
     if (!response || response->getType() != MarketDataSnapshot)
     {
-	   return prices;
+        return prices;
     }
 
     BOOST_LOG_TRIVIAL(debug) << "Request with RequestID='" << response->getRequestID() << "' is completed:";
@@ -796,7 +823,7 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
     
     if (!reader)
     {
-	   return prices;
+        return prices;
     }
 
     for (int ii = reader->size() - 1; ii >= 0; ii--)
@@ -816,7 +843,7 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
         {
             prices.push_back(Prices(
                 toPtime(dt),
-			    reader->getAsk(ii)/reader->getBid(ii)));
+                reader->getAsk(ii)/reader->getBid(ii)));
         }
     }
 
@@ -827,15 +854,17 @@ IO2GTableManager* ForexConnectClient::getLoadedTableManager()
 {
     O2G2Ptr<IO2GTableManager> tableManager = mpSession->getTableManager();
     O2GTableManagerStatus managerStatus = tableManager->getStatus();
+    
     while (managerStatus == TablesLoading)
     {
-	Sleep(50);
-	managerStatus = tableManager->getStatus();
+        Sleep(50);
+        managerStatus = tableManager->getStatus();
     }
     
     if (managerStatus == TablesLoadFailed)
     {
-	throw std::runtime_error("Cannot refresh all tables of table manager");
+        throw std::runtime_error("Cannot refresh all tables of table manager");
     }
+
     return tableManager.Detach();
 }
