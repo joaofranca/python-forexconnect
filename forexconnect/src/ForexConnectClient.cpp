@@ -490,8 +490,6 @@ std::vector<TradeInfo> ForexConnectClient::getTrades()
         trade.mGrossPL = tradeRow->getGrossPL();        
         trades.push_back(trade);        
 
-        BOOST_LOG_TRIVIAL(info) << "trade order id: "<< tradeRow->getOpenOrderID();
-
         tradeRow->release();
 
     }
@@ -504,14 +502,15 @@ boost::python::list ForexConnectClient::getTradesForPython()
     return vector_to_python_list(getTrades());
 }
 
-bool ForexConnectClient::openPosition(
+std::string ForexConnectClient::openPositionAndReturnOrderID(
     const std::string& instrument,
     const std::string& buysell,
     int amount)
 {
+
     if (buysell != O2G2::Sell && buysell != O2G2::Buy)
     {
-	   return false;
+       return "";
     }
 
     std::map<std::string, std::string> offers = getOffers();
@@ -522,7 +521,7 @@ bool ForexConnectClient::openPosition(
         offerID = offer_itr->second;
     } else {
         BOOST_LOG_TRIVIAL(error) << "Could not find offer row for instrument " << instrument;
-        return false;
+        return "";
     }
 
     O2G2Ptr<IO2GTradingSettingsProvider> tradingSettingsProvider = mpLoginRules->getTradingSettingsProvider();
@@ -542,7 +541,7 @@ bool ForexConnectClient::openPosition(
     if (!request)
     {
         BOOST_LOG_TRIVIAL(error) << mpRequestFactory->getLastError();
-        return false;
+        return "";
     }
 
     mpResponseListener->setRequestID(request->getRequestID());
@@ -550,28 +549,36 @@ bool ForexConnectClient::openPosition(
 
     if (!mpResponseListener->waitEvents())
     {
-        BOOST_LOG_TRIVIAL(error) << "openPosition: response waiting timeout expired";
-    	return false;
+        BOOST_LOG_TRIVIAL(error) << "openPositionAndReturnOrderID: response waiting timeout expired";
+        return "";
     }
-
-    Sleep(1000); // Wait for the balance update    
 
     O2G2Ptr<IO2GResponse> response = mpResponseListener->getResponse();
-    if (response && response->getType() == CreateOrderResponse)
+    if (response && response->getType() != CreateOrderResponse)
     {
-        IO2GResponseReaderFactory * readerFactory = mpSession->getResponseReaderFactory();
-        IO2GOrderResponseReader * reader = readerFactory->createOrderResponseReader(response);
-
-        BOOST_LOG_TRIVIAL(info) << "Done! OrderId: " << reader->getOrderID();
-
-        reader->release();
-        readerFactory->release();
-
-    }else{
-        BOOST_LOG_TRIVIAL(info) << "Done! ";
+        BOOST_LOG_TRIVIAL(error) << "openPositionAndReturnOrderID: wrong response type";
+        return "";
     }
 
-    return true;
+    IO2GResponseReaderFactory * readerFactory = mpSession->getResponseReaderFactory();
+    IO2GOrderResponseReader * reader = readerFactory->createOrderResponseReader(response);
+
+    std::string orderID = reader->getOrderID();
+
+    BOOST_LOG_TRIVIAL(info) << "Done! OrderId: " << orderID;
+
+    reader->release();
+    readerFactory->release();
+
+    return orderID;
+}
+
+bool ForexConnectClient::openPosition(
+    const std::string& instrument,
+    const std::string& buysell,
+    int amount)
+{
+    return !openPositionAndReturnOrderID(instrument, buysell, amount).empty();
 }
 
 bool ForexConnectClient::closePosition(const std::string& tradeID)
@@ -612,16 +619,16 @@ bool ForexConnectClient::closePosition(const std::string& tradeID)
 
     mpResponseListener->setRequestID(request->getRequestID());
     mpSession->sendRequest(request);    
-    if (mpResponseListener->waitEvents())
+    if (!mpResponseListener->waitEvents())
     {
-        Sleep(1000); // Wait for the balance update
-        BOOST_LOG_TRIVIAL(info) << "Done!";
-        return true;
+        BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
+        return false;
     }
 
-    BOOST_LOG_TRIVIAL(error) << "Response waiting timeout expired";
+    BOOST_LOG_TRIVIAL(info) << "Done!";
 
-    return false;
+    return true;
+
 }
 
 double ForexConnectClient::getBid(const std::string& instrument) {
