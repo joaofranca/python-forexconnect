@@ -48,6 +48,7 @@ LoginParams::LoginParams(
       mConnection(connection),
       mUrl(url)
 {
+    BOOST_LOG_TRIVIAL(info) << "ForexConnect url: " << url;
 }
 
 std::ostream& pyforexconnect::operator<<(std::ostream& out, LoginParams const& lp)
