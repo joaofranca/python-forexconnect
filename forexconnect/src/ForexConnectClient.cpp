@@ -1,5 +1,7 @@
 #include "ForexConnectClient.h"
+#include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <boost/bind.hpp>
 #include <string.h>
 #include <stdexcept>
@@ -46,6 +48,7 @@ LoginParams::LoginParams(
       mConnection(connection),
       mUrl(url)
 {
+    BOOST_LOG_TRIVIAL(info) << "ForexConnect url: " << url;
 }
 
 std::ostream& pyforexconnect::operator<<(std::ostream& out, LoginParams const& lp)
@@ -174,11 +177,13 @@ SessionStatusListener::~SessionStatusListener()
 
 long SessionStatusListener::addRef()
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return InterlockedIncrement(&mRefCount);
 }
 
 long SessionStatusListener::release()
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     long rc = InterlockedDecrement(&mRefCount);
     if (rc == 0)
         delete this;
@@ -187,6 +192,7 @@ long SessionStatusListener::release()
 
 void SessionStatusListener::reset()
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     mConnected = false;
     mDisconnected = false;
     mError = false;
@@ -194,12 +200,14 @@ void SessionStatusListener::reset()
 
 void SessionStatusListener::onLoginFailed(const char *error)
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     BOOST_LOG_TRIVIAL(error) << "Login error: " << error;
     mError = true;
 }
 
 void SessionStatusListener::onSessionStatusChanged(IO2GSessionStatus::O2GSessionStatus status)
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     switch (status)
     {
         case IO2GSessionStatus::Disconnected:
@@ -273,21 +281,25 @@ void SessionStatusListener::onSessionStatusChanged(IO2GSessionStatus::O2GSession
 
 bool SessionStatusListener::hasError() const
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return mError;
 }
 
 bool SessionStatusListener::isConnected() const
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return mConnected;
 }
 
 bool SessionStatusListener::isDisconnected() const
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return mDisconnected;
 }
 
 bool SessionStatusListener::waitEvents()
 {
+    BOOST_LOG_TRIVIAL(trace) << __PRETTY_FUNCTION__;
     return WaitForSingleObject(mSessionEvent, _TIMEOUT) == 0;
 }
 
@@ -377,6 +389,10 @@ void ForexConnectClient::init()
 bool ForexConnectClient::login()
 {
     mpListener->reset();
+    BOOST_LOG_TRIVIAL(debug) << "user name: " << mLoginParams.mLogin;
+    BOOST_LOG_TRIVIAL(debug) << "password: " << mLoginParams.mPassword;
+    BOOST_LOG_TRIVIAL(debug) << "url: " << mLoginParams.mUrl;
+    BOOST_LOG_TRIVIAL(debug) << "connection: " << mLoginParams.mConnection;
     mpSession->login(mLoginParams.mLogin.c_str(),
         mLoginParams.mPassword.c_str(),
         mLoginParams.mUrl.c_str(),
@@ -874,4 +890,9 @@ IO2GTableManager* ForexConnectClient::getLoadedTableManager()
     }
 
     return tableManager.Detach();
+}
+
+void pyforexconnect::setLogLevel(int level)
+{
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= static_cast<boost::log::trivial::severity_level>(level));
 }
