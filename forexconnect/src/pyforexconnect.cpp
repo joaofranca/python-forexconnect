@@ -84,7 +84,7 @@ struct prices_pickle_suite : boost::python::pickle_suite
 {
     static boost::python::tuple getinitargs(const Prices& p)
     {
-        return boost::python::make_tuple(p.mDate, p.mOpen, p.mHigh, p.mLow, p.mClose, p.mVolume);
+        return boost::python::make_tuple(p.mDate, p.mAskOpen, p.mAskClose, p.mAskHigh, p.mAskLow, p.mBidOpen, p.mBidClose, p.mBidHigh, p.mBidLow, p.mVolume);
     }
 
     static boost::python::tuple getstate(boost::python::object obj)
@@ -92,12 +92,15 @@ struct prices_pickle_suite : boost::python::pickle_suite
         Prices const& p = boost::python::extract<Prices const&>(obj)();
         boost::python::dict d = boost::python::extract<boost::python::dict>(obj.attr("__dict__"));
         d["date"] = p.mDate;
-        d["open"] = p.mOpen;
-        d["high"] = p.mHigh;
-        d["low"] = p.mLow;
-        d["close"] = p.mClose;
+        d["askOpen"] = p.mAskOpen;
+        d["askHigh"] = p.mAskHigh;
+        d["askLow"] = p.mAskLow;
+        d["askClose"] = p.mAskClose;
+        d["bidOpen"] = p.mBidOpen;
+        d["bidHigh"] = p.mBidHigh;
+        d["bidLow"] = p.mBidLow;
+        d["bidClose"] = p.mBidClose;
         d["volume"] = p.mVolume;
-
         return boost::python::make_tuple(d);
     }
 
@@ -115,11 +118,15 @@ struct prices_pickle_suite : boost::python::pickle_suite
             throw_error_already_set();
         }
         dict d = extract<dict>(state[0]);
-        p.mDate = extract<boost::posix_time::ptime>(d["date"]);
-        p.mOpen = extract<double>(d["open"]);
-        p.mHigh = extract<double>(d["high"]);
-        p.mLow = extract<double>(d["low"]);
-        p.mClose = extract<double>(d["close"]);
+        p.mDate = extract<boost::posix_time::ptime>(d["date"]);        
+        p.mAskOpen = extract<double>(d["askOpen"]);
+        p.mAskClose = extract<double>(d["askClose"]);
+        p.mAskHigh = extract<double>(d["askHigh"]);
+        p.mAskLow = extract<double>(d["askLow"]);        
+        p.mBidOpen = extract<double>(d["bidOpen"]);
+        p.mBidClose = extract<double>(d["bidClose"]);
+        p.mBidHigh = extract<double>(d["bidHigh"]);
+        p.mBidLow = extract<double>(d["bidLow"]);        
         p.mVolume = extract<double>(d["volume"]);
     }
 
@@ -182,14 +189,18 @@ BOOST_PYTHON_MODULE(forexconnect)
     .def(self_ns::repr(self));
 
     class_<Prices>("Prices")
-    .def(init<boost::posix_time::ptime, double, double, double, double, double>())
+    .def(init<boost::posix_time::ptime, double, double, double, double, double, double, double, double, double>())
     .add_property("date",
         make_getter(&Prices::mDate, return_value_policy<return_by_value>()),
         make_setter(&Prices::mDate, return_value_policy<copy_non_const_reference>()))
-    .def_readwrite("open", &Prices::mOpen)
-    .def_readwrite("high", &Prices::mHigh)
-    .def_readwrite("low", &Prices::mLow)
-    .def_readwrite("close", &Prices::mClose)
+    .def_readwrite("askOpen", &Prices::mAskOpen)
+    .def_readwrite("askClose", &Prices::mAskClose)
+    .def_readwrite("askHigh", &Prices::mAskHigh)
+    .def_readwrite("askLow", &Prices::mAskLow)
+    .def_readwrite("bidOpen", &Prices::mBidOpen)
+    .def_readwrite("bidClose", &Prices::mBidClose)
+    .def_readwrite("bidHigh", &Prices::mBidHigh)
+    .def_readwrite("bidLow", &Prices::mBidLow)
     .def_readwrite("volume", &Prices::mVolume)
     .def(self_ns::str(self))
     .def(self_ns::repr(self))

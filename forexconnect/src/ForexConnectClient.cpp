@@ -91,11 +91,15 @@ std::ostream& pyforexconnect::operator<<(std::ostream& out, TradeInfo const& ti)
 }
 
 Prices::Prices()
-    : mDate(boost::posix_time::second_clock::local_time()),
-      mOpen(0.0),
-      mHigh(0.0),
-      mLow(0.0),
-      mClose(0.0),
+    : mDate(boost::posix_time::second_clock::local_time()),      
+      mAskOpen(0.0),
+      mAskClose(0.0),
+      mAskHigh(0.0),
+      mAskLow(0.0),
+      mBidOpen(0.0),
+      mBidClose(0.0),
+      mBidHigh(0.0),
+      mBidLow(0.0),
       mVolume(0.0)
 {
 }
@@ -103,25 +107,37 @@ Prices::Prices()
 Prices::Prices(boost::posix_time::ptime date,
     double value)
     : mDate(date),
-      mOpen(value),
-      mHigh(value),
-      mLow(value),
-      mClose(value),
+      mAskOpen(value),
+      mAskClose(value),
+      mAskHigh(value),
+      mAskLow(value),
+      mBidOpen(value),
+      mBidClose(value),
+      mBidHigh(value),
+      mBidLow(value),
       mVolume(value)
 {
 }
 
 Prices::Prices(boost::posix_time::ptime date,
-    double open,
-    double high,
-    double low,
-    double close,
+    double askOpen,
+    double askClose,
+    double askHigh,
+    double askLow,
+    double bidOpen,
+    double bidClose,
+    double bidHigh,
+    double bidLow,
     double volume)
     : mDate(date),
-      mOpen(open),
-      mHigh(high),
-      mLow(low),
-      mClose(close),
+      mAskOpen(askOpen),
+      mAskClose(askClose),
+      mAskHigh(askHigh),
+      mAskLow(askLow),
+      mBidOpen(bidOpen),
+      mBidClose(bidClose),
+      mBidHigh(bidHigh),
+      mBidLow(bidLow),
       mVolume(volume)
 {
 }
@@ -129,10 +145,14 @@ Prices::Prices(boost::posix_time::ptime date,
 bool Prices::operator==(const Prices& other)
 {
     return mDate == other.mDate &&
-    mOpen == other.mOpen &&
-    mHigh == other.mHigh &&
-    mLow == other.mLow &&
-    mClose == other.mClose &&
+    mAskOpen == other.mAskOpen &&
+    mAskClose == other.mAskClose &&
+    mAskHigh == other.mAskHigh &&
+    mAskLow == other.mAskLow &&    
+    mBidOpen == other.mBidOpen &&
+    mBidClose == other.mBidClose &&
+    mBidHigh == other.mBidHigh &&
+    mBidLow == other.mBidLow &&
     mVolume == other.mVolume;
 }
 
@@ -144,10 +164,14 @@ bool Prices::operator!=(const Prices& other)
 std::ostream& pyforexconnect::operator<<(std::ostream& out, Prices const& pr)
 {
     out << "<'date': " << pr.mDate
-    << ", 'open': " << pr.mOpen
-    << ", 'high': " << pr.mHigh
-    << ", 'low': " << pr.mLow
-    << ", 'close': " << pr.mClose
+    << ", 'askOpen': " << pr.mAskOpen
+    << ", 'askClose': " << pr.mAskClose
+    << ", 'askHigh': " << pr.mAskHigh
+    << ", 'askLow': " << pr.mAskLow
+    << ", 'bidOpen': " << pr.mBidOpen
+    << ", 'bidClose': " << pr.mBidClose
+    << ", 'bidHigh': " << pr.mBidHigh
+    << ", 'bidLow': " << pr.mBidLow
     << ", 'volume': " << pr.mVolume << ">";
     return out;
 }
@@ -705,10 +729,14 @@ std::vector<Prices> ForexConnectClient::getPricesFromResponse(IO2GResponse* resp
         {
             prices.push_back(Prices(
                 toPtime(dt),
-                reader->getAskOpen(ii)/reader->getBidOpen(ii),
-                reader->getAskHigh(ii)/reader->getBidHigh(ii),
-                reader->getAskLow(ii)/reader->getBidLow(ii),
-                reader->getAskClose(ii)/reader->getBidClose(ii),
+                reader->getAskOpen(ii),
+                reader->getAskClose(ii),
+                reader->getAskHigh(ii),
+                reader->getAskLow(ii),
+                reader->getBidOpen(ii),
+                reader->getBidClose(ii),
+                reader->getBidHigh(ii),
+                reader->getBidLow(ii),                
                 reader->getVolume(ii)));
         }
         else
